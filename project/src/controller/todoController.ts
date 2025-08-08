@@ -6,15 +6,6 @@ import jwt from "jsonwebtoken";
 
 export const getTodo = async (req: Request, res: Response) => {
   try {
-    const token = req.headers.authorization;
-    if (!token) {
-      return res.status(401).send('Access Denied!');
-    }
-    try{
-      const VerifyToken = jwt.verify(token, process.env.JWT_SECRET);
-    }catch(err){
-      res.status(400).send('Invalid token!');
-    }
     const todoRepo = tododb.getRepository(todolist);
     const todos = await todoRepo.find();
     res.json(todos);
@@ -26,15 +17,7 @@ export const getTodo = async (req: Request, res: Response) => {
 
 export const addTodo = async (req: Request, res: Response) => {
   try {
-    const token = req.headers.authorization;
-    if (!token) {
-      return res.status(401).send('Access Denied!');
-    }
     try{
-      const VerifyToken = jwt.verify(token, process.env.JWT_SECRET);
-    }catch(err){
-      res.status(400).send('Invalid token!');
-    }
       const { content, status, userId } = req.body as{content:string, status: string, userId:number };
       console.log("Request: ", req.body);
       if(!userId){
@@ -44,7 +27,7 @@ export const addTodo = async (req: Request, res: Response) => {
       const todoRepo = tododb.getRepository(todolist);
       const userRepo = tododb.getRepository(User);
 
-      const user = await userRepo.findOneBy({ userId});
+      const user = await userRepo.findOneBy({ userId:userId});
 
       if (!user) {
         console.log("User not found")
@@ -69,6 +52,10 @@ export const addTodo = async (req: Request, res: Response) => {
       await todoRepo.save(newTask);
       console.log("New task added successfully")
       res.status(201).json({ message: "New task added successfully", task: newTask });
+    }catch(err){
+      res.status(400).send('Invalid token!');
+    }
+      
   } catch (error) {
     console.error("Error adding task:", error);
     console.log("Task add failed")
@@ -78,15 +65,6 @@ export const addTodo = async (req: Request, res: Response) => {
 
 export const updateContent = async (req: Request, res: Response) => {
   try {
-     const token = req.headers.authorization;
-    if (!token) {
-      return res.status(401).send('Access Denied!');
-    }
-    try{
-      const VerifyToken = jwt.verify(token, process.env.JWT_SECRET);
-    }catch(err){
-      res.status(400).send('Invalid token!');
-    }
     const id = parseInt(req.params.id, 10);
     const { content, status, userId } = req.body as{content:string, status: string, userId:number };
     console.log("Request: ", req.body);
@@ -120,15 +98,6 @@ export const updateContent = async (req: Request, res: Response) => {
 
 export const deleteContent = async (req: Request, res: Response) => {
   try {
-     const token = req.headers.authorization;
-    if (!token) {
-      return res.status(401).send('Access Denied!');
-    }
-    try{
-      const VerifyToken = jwt.verify(token, process.env.JWT_SECRET);
-    }catch(err){
-      res.status(400).send('Invalid token!');
-    }
     const id = parseInt(req.params.id, 10);
     const { userId } = req.body as { userId: number };
 
@@ -139,7 +108,7 @@ export const deleteContent = async (req: Request, res: Response) => {
     const todoRepo = tododb.getRepository(todolist);
 
     const taskToDelete = await todoRepo.findOne({
-      where: { id, user: { userId } },
+      where: { id, user: { userId:userId } },
       relations: ["user"],
     });
 
@@ -155,7 +124,3 @@ export const deleteContent = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Deletion failed", error });
   }
 };
-
-// function next() {
-//   throw new Error("Function not implemented.");
-// }
