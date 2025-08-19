@@ -1,20 +1,124 @@
+
 import type { Request, Response } from "express";
 import { tododb } from "../db";
 import { todolist } from "../entity/todo";
 import { User } from "../entity/user";
-import jwt from "jsonwebtoken";
-
+import { Comment } from "../entity/comment";
 export const getTodo = async (req: Request, res: Response) => {
   try {
     const todoRepo = tododb.getRepository(todolist);
-    const todos = await todoRepo.find();
-    res.json(todos);
+    const todos = await todoRepo.find({
+      relations:["user","likedBy", "comments", "comments.user"],
+    });
+    const todosWithLikes = todos.map(todo => ({
+      ...todo,
+      likes: todo.likedBy.length,
+    }));
+    res.json(todosWithLikes);
   } catch (error) {
     console.error("Error getting tasks:", error);
     res.status(500).json({ message: "Failed to fetch tasks", error });
   }
 };
+export const getTodoById = async (req: Request, res: Response) => {
+  const { taskId } = req.params;
 
+  const parsedTaskId = parseInt(taskId, 10);
+  if (isNaN(parsedTaskId)) {
+    return res.status(400).json({ message: "Invalid taskId in URL" });
+  }
+
+  try {
+    const todoRepo = tododb.getRepository(todolist);
+
+    const todo = await todoRepo.findOne({
+      where: { taskId: parsedTaskId },
+      relations: ["user", "comments", "comments.user"], 
+    });
+
+    if (!todo) {
+      return res.status(404).json({ message: "Todo not found" });
+    }
+
+    res.status(200).json(todo);
+  } catch (error) {
+    console.error("Error getting task:", error);
+    res.status(500).json({ message: "Failed to fetch task", error });
+  }
+};
+
+export const addComment = async (req: Request, res: Response) => {
+  console.log("Request: ", req.params);
+  const { comment, userId, taskId } = req.body as { comment: string; userId: number; taskId: number };
+  console.log("Request: ", req.body);
+
+  if (!comment || !userId) {
+    return res.status(400).json({ message: "Both comment and userId are required" });
+  }
+
+  try {
+    const todoRepo = tododb.getRepository(todolist);
+    const userRepo = tododb.getRepository(User);
+    const commentRepo = tododb.getRepository(Comment);
+
+    const todo = await todoRepo.findOneBy({ taskId: taskId });
+    if (!todo) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+    const user = await userRepo.findOneBy({ userId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const newComment = new Comment();
+    newComment.comment = comment;
+    newComment.user = user;
+    newComment.todo = todo;
+
+    await commentRepo.save(newComment);
+
+    res.status(201).json({
+      message: "Comment added successfully",
+      comment: newComment,
+    });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ message: "Failed to add comment", error });
+  }
+};
+
+export const likeTodo = async(req:Request, res:Response)=>{
+  const {taskId} = req.params;
+  console.log("request:", req.params);
+  const userId = req.body.userId;
+  console.log(req.body);
+
+  try{
+    const todoRepo=tododb.getRepository(todolist);
+    const userRepo = tododb.getRepository(User);
+
+    const todo = await todoRepo.findOne({
+      where:{taskId: parseInt(taskId,10)},
+      relations:["likedBy"],
+    });
+    if(!todo){
+      return res.status(404).json({message:"Todo not found"});
+    }
+    const user = await userRepo.findOne({where:{userId}});
+    if(!user){
+      return res.status(404).json({message: "User not found"});
+    }
+    const alreadyLiked = todo.likedBy.some((people)=> people.userId===user.userId);
+    if(alreadyLiked){
+      return res.status(400).json({message:"You have already liked this task"});
+    }
+    todo.likedBy.push(user);
+    await todoRepo.save(todo);
+    res.status(200).json({message: "Task liked succssfully", todo});
+  }catch(error){
+    console.log("Error liking task:", error);
+    res.status(500).json({message:"Failed to like task", error});
+  }
+}
 export const addTodo = async (req: Request, res: Response) => {
   try {
     try{
@@ -52,7 +156,8 @@ export const addTodo = async (req: Request, res: Response) => {
       await todoRepo.save(newTask);
       console.log("New task added successfully")
       res.status(201).json({ message: "New task added successfully", task: newTask });
-    }catch(err){
+   
+    }catch(error){
       res.status(400).send('Invalid token!');
     }
       
@@ -65,7 +170,7 @@ export const addTodo = async (req: Request, res: Response) => {
 
 export const updateContent = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const taskId = parseInt(req.params.id, 10);
     const { content, status, userId } = req.body as{content:string, status: string, userId:number };
     console.log("Request: ", req.body);
     if(!userId){
@@ -75,7 +180,7 @@ export const updateContent = async (req: Request, res: Response) => {
     const todoRepo = tododb.getRepository(todolist);
 
     const taskToUpdate = await todoRepo.findOne({
-      where: { id, user: { userId:userId } },
+      where: { taskId, user: { userId:userId } },
       relations: ["user"],
     });
 
@@ -98,7 +203,7 @@ export const updateContent = async (req: Request, res: Response) => {
 
 export const deleteContent = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const taskId = parseInt(req.params.id, 10);
     const { userId } = req.body as { userId: number };
 
     if (!userId) {
@@ -108,7 +213,7 @@ export const deleteContent = async (req: Request, res: Response) => {
     const todoRepo = tododb.getRepository(todolist);
 
     const taskToDelete = await todoRepo.findOne({
-      where: { id, user: { userId:userId } },
+      where: { taskId, user: { userId:userId } },
       relations: ["user"],
     });
 

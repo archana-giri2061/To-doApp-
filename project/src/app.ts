@@ -5,6 +5,7 @@ import {register} from "./controller/authController";
 import { tododb } from "./db";
 import dotenv from "dotenv";
 import authRouter from "./router/authRouter";
+import todoRouter from "./router/todoRouter";
 
 
 const app = express();
@@ -15,7 +16,7 @@ app.use(express.json());
 app.post('/api/login', login)
 app.post('/api/register', register);
 app.use("/api", authRouter);
-app.use("/todo", authRouter);
+app.use("/todo", todoRouter);
 
 
 tododb.initialize()

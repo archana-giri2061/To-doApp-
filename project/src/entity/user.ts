@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany } from "typeorm";
 import { todolist } from "./todo";
+import{Comment} from "./comment";
 
 @Entity()
 export class User {
@@ -14,4 +15,9 @@ export class User {
   userName: string;
   @OneToMany(() => todolist, (todo) => todo.user)
   todos: todolist[];
+  @OneToMany(() => Comment, (comment) => comment.user)
+  comments: Comment[];
+  @ManyToMany(()=>todolist,(todo)=>todo.likedBy)
+  likedTodos:todolist[];
+
 }

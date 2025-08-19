@@ -1,6 +1,7 @@
 import { DataSource } from "typeorm";
 import { User } from "./entity/user";
 import { todolist } from "./entity/todo";
+import {Comment} from "./entity/comment"
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -14,5 +15,5 @@ export const tododb = new DataSource({
   database: process.env.DB_NAME,
   synchronize: true,
   logging: false,
-  entities: [User, todolist],
+  entities: [User, todolist, Comment],
 });

@@ -1,15 +1,15 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import jwt, { SignOptions } from "jsonwebtoken";
+import jwt, { Secret } from "jsonwebtoken";
 import dotenv from "dotenv";
 import { tododb } from "../db";
 import { User } from "../entity/user";
 
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallbacksecret";
-const JWT_EXPIRES_IN: SignOptions["expiresIn"] =
-  (process.env.JWT_EXPIRES_IN as SignOptions["expiresIn"]) || "1h";
+//const JWT_SECRET = process.env.JWT_SECRET || "fallbacksecret";
+const ACCESS_SECRET: Secret = process.env.JWT_ACCESS_SECRET || "accesssecret";
+const REFRESH_SECRET: Secret = process.env.JWT_REFRESH_SECRET || "refreshsecret";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -67,13 +67,20 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       { userId: user.userId, email: user.userEmail },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      ACCESS_SECRET,
+      {expiresIn: "15m"}
+
+    );
+    const refreshToken = jwt.sign(
+      { userId: user.userId, email: user.userEmail },
+      REFRESH_SECRET,
+      {expiresIn: "1d"}
+
     );
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", accessToken, refreshToken });
     console.log("login successfully")
   } catch (error) {
     console.error("Login error:", error);
@@ -152,3 +159,5 @@ export const deleteUser = async (req: Request, res: Response) => {
   res.json({ message: "User deleted" });
   console.log("User deleted successfully")
 };
+
+
