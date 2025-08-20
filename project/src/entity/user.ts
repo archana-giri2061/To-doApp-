@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany,DeleteDateColumn } from "typeorm";
 import { todolist } from "./todo";
 import{Comment} from "./comment";
 
@@ -19,5 +19,6 @@ export class User {
   comments: Comment[];
   @ManyToMany(()=>todolist,(todo)=>todo.likedBy)
   likedTodos:todolist[];
-
+  @DeleteDateColumn({ type: "timestamp", nullable: true })
+  deletedAt: Date | null;
 }

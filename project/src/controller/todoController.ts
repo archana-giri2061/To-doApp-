@@ -7,19 +7,43 @@ import { Comment } from "../entity/comment";
 export const getTodo = async (req: Request, res: Response) => {
   try {
     const todoRepo = tododb.getRepository(todolist);
-    const todos = await todoRepo.find({
-      relations:["user","likedBy", "comments", "comments.user"],
-    });
+
+    const todos = await todoRepo
+      .createQueryBuilder("todo")
+      .leftJoinAndSelect("todo.user", "user")
+      .leftJoinAndSelect("todo.likedBy", "likedBy")
+      .leftJoinAndSelect("todo.comments", "comments")
+      .leftJoinAndSelect("comments.user", "commentUser")
+      .select([
+        "todo.taskId",          
+        "user.userId",
+        "user.userName",
+        "likedBy.userId",
+        "likedBy.userName",
+        "comments.commentId",
+        "comments.comment",
+        "commentUser.userId",
+        "commentUser.userName"
+      ])
+      .getMany();
+
+    // add likes count
     const todosWithLikes = todos.map(todo => ({
       ...todo,
-      likes: todo.likedBy.length,
+      likes: todo.likedBy ? todo.likedBy.length : 0
     }));
-    res.json(todosWithLikes);
+
+    res.status(200).json(todosWithLikes);
+
   } catch (error) {
     console.error("Error getting tasks:", error);
-    res.status(500).json({ message: "Failed to fetch tasks", error });
+    res.status(500).json({
+      message: "Failed to fetch tasks",
+      error: error.message || error
+    });
   }
 };
+
 export const getTodoById = async (req: Request, res: Response) => {
   const { taskId } = req.params;
 

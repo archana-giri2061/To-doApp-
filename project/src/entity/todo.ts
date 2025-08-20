@@ -3,9 +3,6 @@ import { User } from "./user";
 import{Comment} from "./comment";
 @Entity()
 export class todolist{
-//   static initialize() {
-//       throw new Error("Method not implemented.");
-//   }
   @PrimaryGeneratedColumn("increment")
   taskId: number;
   @Column()
