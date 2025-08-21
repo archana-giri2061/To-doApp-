@@ -1,5 +1,5 @@
 import * as express from "express";
-import { register, login, getUser, updateUser, patchUser, deleteUser, getUserById } from "../controller/authController";
+import { register, login, getUser, updateUser, patchUser, deleteUser, getUserById, refresh } from "../controller/authController";
 import { verifyToken } from "../middleware/authMIddleware";
 
 //import { verifyToken } from "../middleware/authMiddleware";
@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.get("/refresh",verifyToken, refresh);
 router.get("/user", getUser);
 router.get("/user/:id", getUserById);
 router.put("/user/:id", updateUser);

@@ -40,7 +40,7 @@ interface DecodedToken extends JwtPayload {
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = req.headers.authorization;
+    const token = req.cookies.accessToken;
 
     if (!token) {
       res.status(401).json({ message: "Access Denied! No token provided." });

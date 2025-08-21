@@ -79,13 +79,36 @@ export const login = async (req: Request, res: Response) => {
       {expiresIn: "1d"}
 
     );
-
-    res.json({ message: "Login successful", accessToken, refreshToken });
+    res.cookie(" ", refreshToken,{
+      httpOnly: true,
+      secure: process.env.JWT_REFRESH_SECRET === "production",
+      sameSite:"strict",
+      maxAge: 24*60*60*1000
+    })
+    res.json({ message: "Login successful", accessToken });
     console.log("login successfully")
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Login failed", error });
     console.log("login failed")
+  }
+};
+export const refresh = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) return res.status(401).json({ message: "No refresh token" });
+
+  try {
+    const decoded = jwt.verify(refreshToken, REFRESH_SECRET) as { userId: number; email: string };
+
+    const accessToken = jwt.sign(
+      { userId: decoded.userId, email: decoded.email },
+      ACCESS_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    res.json({ accessToken });
+  } catch (error) {
+    res.status(403).json({ message: "Invalid refresh token", error });
   }
 };
 

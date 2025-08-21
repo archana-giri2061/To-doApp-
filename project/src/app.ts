@@ -1,20 +1,18 @@
 import "dotenv/config";
 import express from "express";
-import {login} from "./controller/authController";
-import {register} from "./controller/authController";
 import { tododb } from "./db";
 import dotenv from "dotenv";
 import authRouter from "./router/authRouter";
 import todoRouter from "./router/todoRouter";
-
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 dotenv.config(); 
 app.use(express.json());
+app.use(cookieParser());
 
-app.post('/api/login', login)
-app.post('/api/register', register);
+app.get("/login",)
 app.use("/api", authRouter);
 app.use("/todo", todoRouter);
 
