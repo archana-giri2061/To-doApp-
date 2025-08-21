@@ -1,3 +1,34 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+//import { Request, Response, NextFunction } from "express";
+// import jwt from "jsonwebtoken";
+// export const verifyToken = (req, res, next)=>{
+//     const token = req.headers.authorization; 
+//         if (!token) {
+//           return res.status(401).send('Access Denied!');
+//         }
+//         try{
+//           const VerifyToken = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+          
+//           next();
+//         }catch(err){
+//           res.status(400).send('Invalid token!');
+//         }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { tododb } from "../db";
@@ -7,7 +38,7 @@ interface DecodedToken extends JwtPayload {
   userId: number;
 }
 
-export const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization;
 
@@ -31,8 +62,8 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (req as any).user = user;
+
+    req.user = user;
     next();
   } catch (error) {
     res.status(400).json({ message: "Invalid token!", error });

@@ -19,6 +19,6 @@ export class User {
   comments: Comment[];
   @ManyToMany(()=>todolist,(todo)=>todo.likedBy)
   likedTodos:todolist[];
-  @DeleteDateColumn({ type: "timestamp", nullable: true })
-  deletedAt: Date | null;
+  @DeleteDateColumn({ nullable: true })
+  deletedAt?: Date;
 }
